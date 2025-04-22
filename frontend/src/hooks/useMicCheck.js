@@ -1,7 +1,8 @@
 import { useRef, useState, useCallback } from 'react'
+import { permissionDeniedErrorMessageMap, noMicInputErrorMessageMap } from '../utils/textMap'
 import RecordRTC from 'recordrtc'
 
-export default function useMicCheck(onReady, videoRequired = false) {
+export default function useMicCheck(onReady, language, videoRequired = false) {
     const [volumeReady, setVolumeReady] = useState(false)
     const [error, setError] = useState(null)
     const recorderRef = useRef(null)
@@ -41,7 +42,7 @@ export default function useMicCheck(onReady, videoRequired = false) {
                     } else {
                         silenceCounter++
                         if (silenceCounter > 100) {
-                            setError("Microphone is not active or no input detected")
+                            setError( noMicInputErrorMessageMap[language] || noMicInputErrorMessageMap.en )
                             return
                         }
                         requestAnimationFrame(detectVolume)
@@ -57,7 +58,7 @@ export default function useMicCheck(onReady, videoRequired = false) {
                 })
             })
         .catch(() => {
-            setError("Access to microphone or camera was denied")
+            setError( permissionDeniedErrorMessageMap[language] || permissionDeniedErrorMessageMap.en )
         })
     }, [onReady, videoRequired])
 

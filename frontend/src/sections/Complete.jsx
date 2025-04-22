@@ -1,3 +1,23 @@
-export default function Complete({ message }) {
-    return <div className="p-8 text-center">{message || 'Thank you for completing the interview!'}</div>
+import CardHolder from '../components/CardHolder'
+import Header from '../components/Header'
+import Text from '../components/Text'
+import { completeMessageHeaderMap } from '../utils/textMap'
+
+export default function Complete({ message, language = 'en' }) {
+    console.log(message)
+    return (
+        <CardHolder additional="relative overflow-hidden h-[200px] flex flex-col justify-between">
+            <img
+              src="/images/wave-long.png"
+              alt="Wave background"
+              className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-auto mask-wave-passive pointer-events-none"
+            />
+
+            <div className="z-10 px-[40px] pt-[40px]">
+              <Header>{ completeMessageHeaderMap[language] || completeMessageHeaderMap.en }</Header>
+              <Text>{ message }</Text>
+            </div>
+        </CardHolder>
+    )
 }
+  

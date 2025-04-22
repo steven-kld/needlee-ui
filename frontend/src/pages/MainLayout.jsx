@@ -47,7 +47,7 @@ export default function MainLayout() {
 
     setMedia(mediaObj)
     setStatus('interview')
-  }, interviewMeta?.video ?? false)
+  }, interviewMeta?.language, interviewMeta?.video ?? false)
 
   const handleCrash = (msg) => {
     setErrorMessage(msg)
@@ -67,16 +67,17 @@ export default function MainLayout() {
 
     initializeSession({ o: org, i: interview, c: contact, uuid })
       .then(async data => {
+        setInterviewMeta({
+          ...data,
+          org,
+          interview,
+          contact,
+          uuid
+        })
+        
         if (data.completed) {
           setStatus('complete')
         } else {
-          setInterviewMeta({
-            ...data,
-            org,
-            interview,
-            contact,
-            uuid
-          })
           setStatus('welcome')
 
           try {
@@ -116,8 +117,8 @@ export default function MainLayout() {
       <Noise />
 
       {status === 'loading' && <Loading />}
-      {status === 'error' && <Error message={errorMessage}/>}
-      {status === 'complete' && <Complete message={interviewMeta?.thankYouMessage} />}
+      {status === 'error' && <Error message={errorMessage} language={interviewMeta?.language} />}
+      {status === 'complete' && <Complete message={interviewMeta?.thankYouMessage} language={interviewMeta?.language} />}
   
       {status === 'welcome' && (
         <Welcome

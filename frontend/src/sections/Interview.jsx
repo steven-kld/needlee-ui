@@ -89,8 +89,9 @@ export default function Interview({
     if (!audioStream) return
   
     recorderRef.current = createRecorderAgent({
-      audioStream,
-      videoStream,
+      language: interviewMeta.language,
+      audioStream: audioStream,
+      videoStream: videoStream,
       onChunk: (blob, { question, chunk }) => {
         uploadChunk({
           blob: blob,
@@ -105,6 +106,10 @@ export default function Interview({
             console.warn('Chunk upload failed.')
           }
         })
+      },
+      onCrash: (msg) => {
+        setCrashed(true)
+        setCrashMessage(msg)
       }
     })
   }, [audioStream, videoStream])

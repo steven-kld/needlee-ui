@@ -1,6 +1,8 @@
 import RecordRTC from 'recordrtc'
+import { noStreamErrorMessageMap, startRecordingErrorMessageMap } from '../utils/textMap'
 
 export default function createRecorderAgent({
+    language,
     audioStream,
     videoStream,
     onChunk,
@@ -39,7 +41,7 @@ export default function createRecorderAgent({
 
         const combinedStream = buildStream()
         if (!combinedStream) {
-            onCrash('No audio or video tracks available for recording.')
+            onCrash(noStreamErrorMessageMap[language] || noStreamErrorMessageMap.en)
             return
         }
 
@@ -52,7 +54,7 @@ export default function createRecorderAgent({
             recorder.startRecording()
         } catch (err) {
             console.error('❌ Failed to start recording:', err)
-            onCrash('Failed to start recording. Please check your camera and microphone.')
+            onCrash(startRecordingErrorMessageMap[language] || startRecordingErrorMessageMap.en)
             return
         }
 
