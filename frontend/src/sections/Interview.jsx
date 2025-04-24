@@ -26,7 +26,6 @@ export default function Interview({
   if (!questions?.length || !urls?.length) {
     return <Loading />
   }
-
   const [current, setCurrent] = useState(0)
   const [crashed, setCrashed] = useState(false)
   const [crashMessage, setCrashMessage] = useState('')
@@ -71,7 +70,7 @@ export default function Interview({
           recorderRef.current?.start({ question: currentRef.current }) 
           timerRef.current = setTimeout(() => {
             setCanProceed(true)
-          }, 3000)
+          }, 2000)
         },
         onCrash: (msg) => {
           setCrashed(true)

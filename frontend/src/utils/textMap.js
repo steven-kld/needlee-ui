@@ -23,7 +23,7 @@ export const termsCheckboxTextMap = {
 }
 
 export const completeMessageHeaderMap = {
-    en: 'Interview completed successfully',
+    en: 'Interview complete successfully',
     ru: 'Интервью успешно завершено',
     es: 'Entrevista completada con éxito',
     fr: 'Entretien terminé avec succès',

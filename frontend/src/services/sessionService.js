@@ -17,7 +17,7 @@ export async function initializeSession({ o, i, c, uuid }) {
 
 function mockSession() {
     return {
-        completed: true,
+        complete: true,
         description: "Answer a few short questions. All you need is a mic.",
         displayName: "Get started with your voice interview",
         language: "en",

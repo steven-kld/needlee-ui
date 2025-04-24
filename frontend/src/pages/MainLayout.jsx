@@ -10,6 +10,8 @@ import Loading from '../components/Loading'
 
 import { initializeSession } from '../services/sessionService'
 import { fetchQuestions } from '../services/questionSerivce'
+import closeInterviewService from '../services/closeInterviewService'
+
 import useMicCheck from '../hooks/useMicCheck'
 import { interviewInitErrorMessageMap, questionLoadErrorMessageMap } from '../utils/textMap'
 
@@ -23,9 +25,10 @@ export default function MainLayout() {
   const [urls, setUrls] = useState([])
   const [attempt, setAttempt] = useState(null)
   const [media, setMedia] = useState(null)
-  const [uuid] = useState(generateUUID())
+  const [uuid, setUuid] = useState(null)
   const [micError, setMicError] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [hasFetchedQuestions, setHasFetchedQuestions] = useState(false) // guard
 
   const {
     startCheck,
@@ -54,58 +57,88 @@ export default function MainLayout() {
     setStatus('error')
   }
 
+  const handleComplete = async () => {
+    if (!interviewMeta) return
+    setStatus('loading')
+
+    const result = await closeInterviewService({
+      org: interviewMeta.org,
+      interview: interviewMeta.interview,
+      uuid: uuid,
+      attempt: attempt
+    })
+  
+    console.log('Interview close status:', result)
+    setStatus('complete')
+  }
+
+  // 1. Run initializeSession only once
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const org = parseInt(params.get('o'))
     const interview = parseInt(params.get('i'))
     const contact = params.get('c') || null
 
-    if (!org || !interview || !uuid) {
+    if (!org || !interview) {
       handleCrash(interviewInitErrorMessageMap.en)
       return
     }
 
-    initializeSession({ o: org, i: interview, c: contact, uuid })
-      .then(async data => {
-        setInterviewMeta({
+    initializeSession({ o: org, i: interview, c: contact, uuid: generateUUID() })
+      .then((data) => {
+        const fullMeta = {
           ...data,
           org,
           interview,
           contact,
-          uuid
-        })
-        
-        if (data.completed) {
+          uuid: data.uuid
+        }
+        setInterviewMeta(fullMeta)
+        console.log(fullMeta)
+        if (data.complete) {
           setStatus('complete')
         } else {
           setStatus('welcome')
-
-          try {
-            const res = await fetchQuestions({
-              o: org,
-              i: interview,
-              uuid: uuid
-            })
-
-            if (!res.ready) {
-              console.warn('🟡 Questions not ready yet')
-              return
-            }
-
-            setQuestions(res.questions)
-            setUrls(res.urls)
-            setAttempt(res.attempt)
-          } catch (err) {
-            console.error('❌ Failed to load questions:', err)
-            handleCrash(questionLoadErrorMessageMap[data.language] || questionLoadErrorMessageMap.en)
-          }
+          setUuid(data.uuid)
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('❌ Session init failed:', err)
         handleCrash(interviewInitErrorMessageMap.en)
       })
-  }, [uuid])
+  }, [])
+
+  // 2. Fetch questions after uuid and meta are updated
+  useEffect(() => {
+    if (
+      status !== 'welcome' ||
+      uuid == null ||
+      hasFetchedQuestions
+    ) {
+      return
+    }
+
+    fetchQuestions({ 
+      o: interviewMeta.org, 
+      i: interviewMeta.interview, 
+      uuid:uuid, 
+      respondent_exists: interviewMeta.respondent_exists 
+    })
+      .then((res) => {
+        if (!res.ready) {
+          console.warn('🟡 Questions not ready yet')
+          return
+        }
+        setAttempt(res.attempt)
+        setQuestions(res.questions)
+        setUrls(res.urls)
+        setHasFetchedQuestions(true) // ✅ avoid refetch
+      })
+      .catch((err) => {
+        console.error('❌ Failed to load questions:', err)
+        handleCrash(questionLoadErrorMessageMap[data.language] || questionLoadErrorMessageMap.en)
+      })
+  }, [interviewMeta])
 
   useEffect(() => {
     if (micHookError) setMicError(micHookError)
@@ -140,7 +173,7 @@ export default function MainLayout() {
           videoStream={media.videoStream}
           videoEnabled={!!media.videoStream}
           interviewMeta={interviewMeta}
-          onComplete={() => setStatus('complete')}
+          onComplete={handleComplete}
           onCrash={handleCrash}
         />
       )}
